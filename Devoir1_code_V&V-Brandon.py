@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def FDM_1ordre(prm):
-    """Fonction simulant avec la méthode des différences finies
+    """Fonction simulant avec la méthode des différences finies d'ordre 1
 
     Entrées:
         - prm : Objet class parametres()
-            - Deff : Température à l'intérieur de la conduite [K]
-            - S : Température ambiante autour de la conduite [K]
+            - Deff : Coefficient de diffusion effectif du sel dans le béton poreux
+            - S : Température ambiante autour de la conduite [mol/m^3/s]
             - Ce : Concentration à la surface du pilier [mol/m^3]
             - Ri : Rayon interne [m]
             - Ro : Rayon externe [m]
@@ -20,8 +20,8 @@ def FDM_1ordre(prm):
             - dr : Pas en espace [m]
 
     Sortie (dans l'ordre énuméré ci-bas):
-        - Vecteur (array) de dimension n composé de la position radiale à laquelle les concentrations sont calculées, où n le nombre de noeuds.
-        - Vecteur (array) de dimension n composé de la concentration en fonction du rayon, où n le nombre de noeuds
+        - Vecteur R (array) de dimension n composé de la position radiale à laquelle les concentrations sont calculées, où n le nombre de noeuds.
+        - Vecteur C (array) de dimension n composé de la concentration en fonction du rayon, où n le nombre de noeuds
     """
     Deff = prm.Deff
     S = prm.S
@@ -58,15 +58,29 @@ def FDM_1ordre(prm):
             M[i, i+1] = R[i]/dr**2 + 1/dr
             
             B[i] = S*R[i]/Deff
-            
-    print(M)
-    print(B)
-            
+    
+    "Résolution du système matriciel"  
     C = np.linalg.solve(M, B) 
     
     return R, C
 
 def FDM_2ordre(prm):
+    """Fonction simulant avec la méthode des différences finies d'ordre 2
+
+    Entrées:
+        - prm : Objet class parametres()
+            - Deff : Coefficient de diffusion effectif du sel dans le béton poreux
+            - S : Température ambiante autour de la conduite [mol/m^3/s]
+            - Ce : Concentration à la surface du pilier [mol/m^3]
+            - Ri : Rayon interne [m]
+            - Ro : Rayon externe [m]
+            - n : Nombre de noeuds [-]
+            - dr : Pas en espace [m]
+
+    Sortie (dans l'ordre énuméré ci-bas):
+        - Vecteur R (array) de dimension n composé de la position radiale à laquelle les concentrations sont calculées, où n le nombre de noeuds.
+        - Vecteur C (array) de dimension n composé de la concentration en fonction du rayon, où n le nombre de noeuds
+    """
 
     Deff = prm.Deff
     S = prm.S
@@ -105,14 +119,14 @@ def FDM_2ordre(prm):
             
             B[i] = S*R[i]/Deff
             
-    print(M)
-    print(B)
-            
+    "Résolution du système matriciel"        
     C = np.linalg.solve(M, B) 
     
     return R, C
 
 def Sol_anal(r, prm):
+    
+    "Calcul de la solution analytique selon la position radiale sur le domaine r"
     
     Deff = prm.Deff
     S = prm.S
@@ -135,7 +149,9 @@ class parametres():
     
 prm = parametres()
 
-######### Question D)
+
+"--------------------QUESTION 1D)--------------------"
+
 Sol1 = FDM_1ordre(prm)
 
 r = np.linspace(prm.Ri, prm.Ro, 201)
@@ -157,8 +173,7 @@ plt.savefig('Ordre1.png', dpi=300)
 plt.show()
 
 
-#Vérification convergence erreur
-
+"Vérification de l'erreur selon la FDM de 1er ordre selon 6 maillage différent"
 nodes = [5, 10, 20, 50, 75, 100]  
 L1_errors, L2_errors, Linf_errors = [], [], []
 h_values = []
@@ -199,9 +214,9 @@ fit_Linf = lambda x: np.exp(coeff_Linf[1]) * x**exp_Linf
 
 # Plot errors and regression lines
 plt.figure(figsize=(8, 6))
-plt.scatter(h_values, L1_errors, color='b', marker='o', label="$L_1$ (Mean Absolute Error)")
-plt.scatter(h_values, L2_errors, color='r', marker='o', label="$L_2$ (RMS Error)")
-plt.scatter(h_values, Linf_errors, color='g', marker='o', label="$L_\infty$ (Max Absolute Error)")
+plt.scatter(h_values, L1_errors, color='b', marker='o', label="Erreur $L_1$")
+plt.scatter(h_values, L2_errors, color='r', marker='o', label="Erreur $L_2$")
+plt.scatter(h_values, Linf_errors, color='g', marker='o', label="Erreur $L_\infty$")
 
 plt.loglog(h_values, fit_L1(h_values), 'b--', label=f"Fit: $L_1 \propto Δx^{{{exp_L1:.2f}}}$")
 plt.loglog(h_values, fit_L2(h_values), 'r--', label=f"Fit: $L_2 \propto Δx^{{{exp_L2:.2f}}}$")
@@ -217,16 +232,18 @@ a.set_position((0.05, 0.3))
 b.set_position((0.05, 0.4))
 c.set_position((0.03, 2))
 
+# Rendre les axes plus gras
 plt.gca().spines['bottom'].set_linewidth(2)
 plt.gca().spines['left'].set_linewidth(2)
 plt.gca().spines['right'].set_linewidth(2)
 plt.gca().spines['top'].set_linewidth(2)
 
+# Placer les marques de coche à l'intérieur et les rendre un peu plus longues
 plt.tick_params(width=2, which='both', direction='in', top=True, right=True, length=6)
 
 
-plt.title("Graphique de convergence des erreurs d'ordre 1", fontsize=14, fontweight='bold')
-plt.xlabel("Taille de maille $\Delta r$ (cm)", fontsize=12, fontweight='bold')
+plt.title("Convergence d'ordre 1 des erreurs $L_1$, $L_2$ & $L_\infty$ en fonction de $\Delta r$", fontsize=14, fontweight='bold')
+plt.xlabel("Taille de maille $\Delta r$ (m)", fontsize=12, fontweight='bold')
 plt.ylabel("Erreur", fontsize=12, fontweight='bold')
 plt.xscale('log')
 plt.yscale('log')
@@ -241,7 +258,7 @@ print(f"Exposant de convergence Linf: {exp_Linf:.4f}")
 
 
 
-######### Question E)
+"--------------------QUESTION 1E)--------------------"
 
 class parametres():
     D = 1
@@ -280,7 +297,7 @@ plt.show()
 
 
 
-#Vérification convergence erreur
+"Vérification de l'erreur selon la FDM de 2e ordre selon 6 maillage différent"
 
 nodes = [5, 10, 20, 50, 75, 100]  
 L1_errors, L2_errors, Linf_errors = [], [], []
@@ -325,9 +342,9 @@ fit_Linf = lambda x: np.exp(coeff_Linf[1]) * x**exp_Linf
 
 # Plot errors and regression lines
 plt.figure(figsize=(8, 6))
-plt.scatter(h_values, L1_errors, color='b', marker='o', label="$L_1$ (Mean Absolute Error)")
-plt.scatter(h_values, L2_errors, color='r', marker='o', label="$L_2$ (RMS Error)")
-plt.scatter(h_values, Linf_errors, color='g', marker='o', label="$L_\infty$ (Max Absolute Error)")
+plt.scatter(h_values, L1_errors, color='b', marker='o', label="Erreur $L_1$")
+plt.scatter(h_values, L2_errors, color='r', marker='o', label="Erreur $L_2$")
+plt.scatter(h_values, Linf_errors, color='g', marker='o', label="Erreur $L_\infty$")
 
 plt.loglog(h_values, fit_L1(h_values), 'b--', label=f"Fit: $L_1 \propto Δx^{{{exp_L1:.2f}}}$")
 plt.loglog(h_values, fit_L2(h_values), 'r--', label=f"Fit: $L_2 \propto Δx^{{{exp_L2:.2f}}}$")
@@ -343,16 +360,18 @@ a.set_position((0.02, 5e-14))
 b.set_position((0.05, 13e-14))
 c.set_position((0.04, 5e-13))
 
+# Rendre les axes plus gras
 plt.gca().spines['bottom'].set_linewidth(2)
 plt.gca().spines['left'].set_linewidth(2)
 plt.gca().spines['right'].set_linewidth(2)
 plt.gca().spines['top'].set_linewidth(2)
 
+# Placer les marques de coche à l'intérieur et les rendre un peu plus longues
 plt.tick_params(width=2, which='both', direction='in', top=True, right=True, length=6)
 
 
-plt.title("Graphique de convergence des erreurs", fontsize=14, fontweight='bold')
-plt.xlabel("Taille de maille $\Delta x$ (cm)", fontsize=12, fontweight='bold')
+plt.title("Convergence d'ordre 2 des erreurs $L_1$, $L_2$ & $L_\infty$ en fonction de $\Delta r$", fontsize=14, fontweight='bold')
+plt.xlabel("Taille de maille $\Delta r$ (m)", fontsize=12, fontweight='bold')
 plt.ylabel("Erreur", fontsize=12, fontweight='bold')
 plt.xscale('log')
 plt.yscale('log')
