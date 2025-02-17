@@ -13,7 +13,7 @@ def FDM_1ordre(prm):
         - prm : Objet class parametres()
             - Deff : Température à l'intérieur de la conduite [K]
             - S : Température ambiante autour de la conduite [K]
-            - Ce : Concentration à la surface du pilier [W*m^-1*K^-1]
+            - Ce : Concentration à la surface du pilier [mol/m^3]
             - Ri : Rayon interne [m]
             - Ro : Rayon externe [m]
             - n : Nombre de noeuds [-]
